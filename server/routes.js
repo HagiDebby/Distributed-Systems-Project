@@ -5,13 +5,13 @@ const { createCustomer, getCustomers } = require('services/customerService');
 const { createPackage, addLocationToPackage, getPackages } = require('services/packageService');
 
 // Business routes
-router.post('/companies', async (req, res) => {
+router.post('/business', async (req, res) => {
     const result = await createCompany(req.body);
     res.status(result.success ? 201 : 400).json(result);
 });
 
-router.get('/companies', async (req, res) => {
-    const companies = await getCompanies();
+router.get('/business', async (req, res) => {
+    const companies = getCompanies();
     res.json(companies);
 });
 
@@ -22,7 +22,7 @@ router.post('/customers', async (req, res) => {
 });
 
 router.get('/customers', async (req, res) => {
-    const customers = await getCustomers();
+    const customers = getCustomers();
     res.json(customers);
 });
 
@@ -37,7 +37,7 @@ router.put('/packages/:id/location', async (req, res) => {
     res.status(result.success ? 200 : 400).json(result);
 });
 
-router.get('/companies/:id/packages', async (req, res) => {
+router.get('/business/:id/packages', async (req, res) => {
     const result = await getPackages(req.params.id);
     res.status(result.success ? 200 : 400).json(result);
 });
