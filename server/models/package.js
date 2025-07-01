@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
-const Business = require('./business'); // Assuming your business model file
-const Customer = require('./customer'); // Assuming your customer model file
-const { validateEpochTimestamp } = require('../validators'); // Your validators file
+const Business = require('./business');
+const Customer = require('./customer');
+const { validateEpochTimestamp } = require('../services/validators');
 
 const packageSchema = new mongoose.Schema({
     prod_id: {
