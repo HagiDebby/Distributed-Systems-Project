@@ -1,8 +1,8 @@
 const express = require('express');
 const router = express.Router();
-const { createCompany, getCompanies } = require('services/businessService');
-const { createCustomer, getCustomers } = require('services/customerService');
-const { createPackage, addLocationToPackage, getPackages } = require('services/packageService');
+const { createCompany, getCompanies } = require('./services/businessService');
+const { createCustomer, getCustomers } = require('./services/customerService');
+const { createPackage, addLocationToPackage, getPackages } = require('./services/packageService');
 
 // Business routes
 router.post('/business', async (req, res) => {
@@ -11,7 +11,7 @@ router.post('/business', async (req, res) => {
 });
 
 router.get('/business', async (req, res) => {
-    const companies = getCompanies();
+    const companies = await getCompanies();
     res.json(companies);
 });
 
@@ -22,7 +22,7 @@ router.post('/customers', async (req, res) => {
 });
 
 router.get('/customers', async (req, res) => {
-    const customers = getCustomers();
+    const customers = await getCustomers();
     res.json(customers);
 });
 
@@ -37,6 +37,7 @@ router.put('/packages/:id/location', async (req, res) => {
     res.status(result.success ? 200 : 400).json(result);
 });
 
+// Change this route to use /business instead of /companies
 router.get('/business/:id/packages', async (req, res) => {
     const result = await getPackages(req.params.id);
     res.status(result.success ? 200 : 400).json(result);
