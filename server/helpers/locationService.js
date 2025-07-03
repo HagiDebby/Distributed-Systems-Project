@@ -14,6 +14,7 @@ const getCoordinatesFromAddress = async (address, apiKey) => {
 
         const response = await axios.get(url);
 
+
         // Return all results, each with lat/lon
         return response.data.map(location => ({
             lat: parseFloat(location.lat),
@@ -21,6 +22,7 @@ const getCoordinatesFromAddress = async (address, apiKey) => {
             display_name: location.display_name,
             place_id: location.place_id
         }));
+
     } catch (error) {
         console.error('LocationIQ API error:', error.message);
         return [];
