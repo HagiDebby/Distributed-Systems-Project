@@ -6,16 +6,6 @@ mongoose.connect('mongodb://localhost:27017/DeliveryHandlingCompany', {
 })
     .then(() => {
         console.log('Connected to MongoDB');
-
-        // Create indexes after successful connection
-        const Business = require('./models/business');
-        const Customer = require('./models/customer');
-        const Package = require('./models/package');
-
-        Business.createIndexes();
-        Customer.createIndexes();
-        Package.createIndexes();
-
         console.log('Database indexes created successfully');
     })
     .catch(err => {
