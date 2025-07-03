@@ -13,7 +13,8 @@ const createCustomer = async (customerDetails) => {
 
         // Try to get coordinates for the address
         const fullAddress = `${address.number} ${address.street}, ${address.city}`;
-        const coordinates = getCoordinatesFromAddress(fullAddress, process.env.LOCATIONIQ_API_KEY);
+        // const coordinates = getCoordinatesFromAddress(fullAddress, process.env.LOCATIONIQ_API_KEY);  // Uncomment this line if you have the API key set up in the dotenv file
+        const coordinates = getCoordinatesFromAddress(fullAddress, "pk.c52ccfeb30e8982c368c12b8d4fc83dd");
 
         // Use first result if available
         if (coordinates.length > 0) {
