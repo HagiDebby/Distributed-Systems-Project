@@ -40,10 +40,10 @@ const addLocationToPackage = async (packageId, locationDetails) => {
         const { lat, lon } = locationDetails;
 
         // Validate lat/lon
-        if (!lat || !lon || lat < -90 || lat > 90 || lon < -180 || lon > 180) {
+        if (!lat || !lon || lat < 29 || lat > 35 || lon < 34 || lon > 36) {
             return {
                 success: false,
-                message: 'Invalid latitude or longitude values'
+                message: 'Invalid latitude or longitude values - outside of Israel boundaries'
             };
         }
 
@@ -67,9 +67,12 @@ const addLocationToPackage = async (packageId, locationDetails) => {
             };
         }
 
-        // Add location to end of path
-        packageDoc.path.push({ lat, lon });
-        await packageDoc.save();
+        // Use findByIdAndUpdate to add location without running validators on other fields
+        await Package.findByIdAndUpdate(
+            packageId,
+            { $push: { path: { lat, lon } } },
+            { runValidators: true } // This will only validate the new path item
+        );
 
         return {
             success: true,

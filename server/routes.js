@@ -32,7 +32,7 @@ router.post('/packages', async (req, res) => {
     res.status(result.success ? 201 : 400).json(result);
 });
 
-router.put('/packages/:id/location', async (req, res) => {
+router.put('/packages/:id/path', async (req, res) => {
     const result = await addLocationToPackage(req.params.id, req.body);
     res.status(result.success ? 200 : 400).json(result);
 });

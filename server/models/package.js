@@ -85,14 +85,14 @@ const packageSchema = new mongoose.Schema({
         lat: {
             type: Number,
             required: true,
-            min: [-90, 'Latitude must be between -90 and 90'],
-            max: [90, 'Latitude must be between -90 and 90']
+            min: [29, 'Latitude must be between 29 and 35 (within Israel)'],
+            max: [35, 'Latitude must be between 29 and 35 (within Israel)']
         },
         lon: {
             type: Number,
             required: true,
-            min: [-180, 'Longitude must be between -180 and 180'],
-            max: [180, 'Longitude must be between -180 and 180']
+            min: [34, 'Longitude must be between 34 and 36 (within Israel)'],
+            max: [36, 'Longitude must be between 34 and 36 (within Israel)']
         }
     }]
 }, { timestamps: true });
