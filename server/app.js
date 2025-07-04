@@ -2,6 +2,7 @@ const express = require('express');
 require('./mongoose');
 const cors = require('cors');
 const Routes = require('./routes');
+const path = require('path');
 
 const app = express();
 const PORT = 3001;
@@ -13,6 +14,14 @@ app.use(express.json());
 
 // Routes initialization
 app.use('/', Routes);
+
+// Client-side static files
+app.use(express.static(path.join(__dirname, '../client')));
+
+app.use('/main', express.static(path.join(__dirname, '../client/html/index.html')));
+app.use('/list', express.static(path.join(__dirname, '../client/html/list.html')));
+app.use('/add_package', express.static(path.join(__dirname, '../client/html/add_package_form.html')));
+
 
 // Error handling middleware
 app.use((err, req, res, next) => {
