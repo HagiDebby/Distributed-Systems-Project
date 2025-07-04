@@ -2,314 +2,110 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <title>Packages List</title>
+  <title>Company Packages</title>
   <link rel="stylesheet" href="/css/style1.css">
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
-  <style>
-    .pointer { cursor: pointer; color: #1f63e6; text-decoration: underline; }
-    .modal-bg { display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.4); z-index:1000; }
-    .modal-content { background:#fff; padding:20px; border-radius:8px; max-width:400px; margin:100px auto; position:relative; }
-    .close-modal { position:absolute; top:8px; right:12px; cursor:pointer; font-size:18px; }
-    .action-btn { margin-right: 5px; }
-    .modal-content label { font-weight: 500; }
-    .modal-content input, .modal-content select { width: 100%; margin-bottom: 10px; }
-  </style>
 </head>
 <body>
   <div class="col-sm-10 col-sm-offset-1">
-    <h1>Packages List</h1>
-    <div>
-      <button class="btn btn-success" id="addPackageTop" style="margin-bottom:10px;">Add Package</button>
-      <label for="companyId" style="margin-left:20px;">Select Company (1-10):</label>
-      <select id="companyId">
-        <option value="1">1</option>
-        <option value="2">2</option>
-        <option value="3">3</option>
-        <option value="4">4</option>
-        <option value="5">5</option>
-        <option value="6">6</option>
-        <option value="7">7</option>
-        <option value="8">8</option>
-        <option value="9">9</option>
-        <option value="10">10</option>
-      </select>
-      <button id="refreshList">Show Packages</button>
-    </div>
-    <br>
-    <table class="table table-bordered" id="packagesTable">
+    <h1 id="companyName">Packages</h1>
+    <table class="table" id="packagesTable">
       <thead>
         <tr>
           <th>Package ID</th>
           <th>Product ID</th>
-          <th>Customer Name</th>
+          <th>Package Name</th>
           <th>Customer ID</th>
-          <th>Order Date</th>
+          <th>Start Date</th>
           <th>ETA</th>
           <th>Status</th>
-          <th>Actions</th>
         </tr>
       </thead>
       <tbody>
         <!-- Packages will be loaded here -->
       </tbody>
     </table>
-    <button class="btn btn-success" id="addPackageBottom" style="margin-top:10px;">Add Package</button>
   </div>
-
-  <!-- Modal for customer details -->
-  <div class="modal-bg" id="customerModal">
-    <div class="modal-content">
-      <span class="close-modal" onclick="$('#customerModal').hide();">&times;</span>
-      <div id="customerDetails"></div>
-    </div>
-  </div>
-
-  <!-- Modal for editing package -->
-  <div class="modal-bg" id="editModal">
-    <div class="modal-content">
-      <span class="close-modal" onclick="$('#editModal').hide();">&times;</span>
-      <h3>Edit Package</h3>
-      <form id="editForm">
-        <input type="hidden" id="editPackageId">
-        <input type="hidden" id="editCompanyId">
-        <label for="editEta">ETA (timestamp):</label>
-        <input type="number" id="editEta" required>
-        <label for="editStatus">Status:</label>
-        <select id="editStatus" required>
-          <option value="packed">packed</option>
-          <option value="shipped">shipped</option>
-          <option value="intransit">intransit</option>
-          <option value="delivered">delivered</option>
-         </select>
-        <button type="submit" class="btn btn-primary">Save</button>
-      </form>
-    </div>
-  </div>
-
-  <!-- Modal for adding location -->
-  <div class="modal-bg" id="locationModal">
-  <div class="modal-content">
-    <span class="close-modal" onclick="$('#locationModal').hide();">&times;</span>
-    <h3>Add Location to Package</h3>
-    <form id="locationForm">
-      <input type="hidden" id="locPackageId">
-      <input type="hidden" id="locCompanyId">
-      <label for="locSearch">Search location (in English):</label>
-      <div style="display:flex;gap:8px;">
-        <input type="text" id="locSearch" placeholder="e.g. Tel Aviv, Israel" style="flex:1;">
-        <button type="button" id="searchLocationBtn" class="btn btn-info">Search</button>
-      </div>
-      <div id="searchResult" style="margin:10px 0 0 0;"></div>
-      <input type="hidden" id="locLat">
-      <input type="hidden" id="locLon">
-      <button type="submit" class="btn btn-primary" disabled id="addLocBtn">Add Location</button>
-    </form>
-  </div>
-</div>
 
   <script>
-    function formatDate(ts) {
-      if (!ts) return '';
-      var d = new Date(Number(ts) * 1000);
-      return d.toLocaleDateString() + ' ' + d.toLocaleTimeString();
+    // Helper to format timestamps
+    function formatDate(epoch) {
+      if (!epoch) return '';
+      const d = new Date(epoch);
+      return d.toLocaleString();
     }
 
-    // retrieve companyId from URL or default to 1
+    // Get companyId from URL
     function getCompanyIdFromUrl() {
       const params = new URLSearchParams(window.location.search);
-      return params.get('companyId') || '1'; // ברירת מחדל 1
+      return params.get('companyId');
     }
 
-    // Set initial companyId from URL or default to 1
-    const initialCompanyId = getCompanyIdFromUrl();
-    $('#companyId').val(initialCompanyId);
-    showPackages(initialCompanyId);
+    // Load company name
+    function loadCompanyName(companyId) {
+      $.get(`/business`, function(companies) {
+        const company = companies.find(c => c._id === companyId);
+        if (company) {
+          $('#companyName').text(`Packages for "${company.name}"`);
+        }
+      });
+    }
 
-    // Show packages for the selected company
-    function showPackages(companyId) {
-      $.get(`/buisness/${companyId}/packages`, function(packages) {
+    // Load packages for company
+    function loadPackages(companyId) {
+      $.get(`/business/${companyId}/packages`, function(result) {
+        let packages = result;
+        // If your API returns {success, data}, use: let packages = result.data;
+        if (!Array.isArray(packages)) packages = packages.data || [];
+        // Sort by start_date descending
+        packages.sort((a, b) => b.start_date - a.start_date);
         let rows = '';
         packages.forEach(pkg => {
           rows += `<tr>
-            <td class="pointer package-id" data-id="${pkg.id}" data-company="${companyId}">${pkg.id}</td>
+            <td class="pointer package-id" data-id="${pkg._id}">${pkg._id}</td>
             <td>${pkg.prod_id}</td>
-            <td>${pkg.customer.name}</td>
-            <td class="pointer customer-id" data-name="${pkg.customer.name}" data-email="${pkg.customer.email}" data-address="${pkg.customer.address.street} ${pkg.customer.address.number}, ${pkg.customer.address.city}">${pkg.customer.id}</td>
+            <td>${pkg.name}</td>
+            <td class="pointer customer-id" data-id="${pkg.customer_id}">${pkg.customer_id}</td>
             <td>${formatDate(pkg.start_date)}</td>
             <td>${formatDate(pkg.eta)}</td>
             <td>${pkg.status}</td>
-            <td>
-              <button class="action-btn btn btn-xs btn-info edit-btn" data-id="${pkg.id}" data-company="${companyId}" data-eta="${pkg.eta}" data-status="${pkg.status}">Edit</button>
-              <button class="action-btn btn btn-xs btn-warning addloc-btn" data-id="${pkg.id}" data-company="${companyId}">Add Location</button>
-              <button class="action-btn btn btn-xs btn-success route-btn" data-id="${pkg.id}" data-company="${companyId}">Show Route</button>
-            </td>
           </tr>`;
         });
-        $('#packagesTable tbody').html(rows);
+        $('#packagesTable tbody').html(rows.length ? rows : '<tr><td colspan="7">No packages found.</td></tr>');
       }).fail(function() {
-        $('#packagesTable tbody').html('<tr><td colspan="8">No packages found for this company.</td></tr>');
+        $('#packagesTable tbody').html('<tr><td colspan="7">Failed to load packages.</td></tr>');
       });
     }
 
-    // Show packages when the page loads
-    $(document).ready(function () {
-      // Initial load
-      showPackages($('#companyId').val());
+    $(document).ready(function() {
+      const companyId = getCompanyIdFromUrl();
+      if (!companyId) {
+        $('.col-sm-10').html('<h2>No company selected.</h2>');
+        return;
+      }
+      loadCompanyName(companyId);
+      loadPackages(companyId);
 
-      $('#refreshList, #companyId').on('click change', function () {
-        showPackages($('#companyId').val());
-      });
-
-      // Add Package buttons
-      $('#addPackageTop, #addPackageBottom').on('click', function () {
-        const companyId = $('#companyId').val();
-        window.location.href = `/add_package?companyId=${companyId}`;
-      }); 
-
-      // Show customer details in modal
-      $('#packagesTable').on('click', '.customer-id', function () {
-        const name = $(this).data('name');
-        const email = $(this).data('email');
-        const address = $(this).data('address');
-        $('#customerDetails').html(
-          `<strong>Name:</strong> ${name}<br>
-           <strong>Email:</strong> ${email}<br>
-           <strong>Address:</strong> ${address}`
-        );
-        $('#customerModal').show();
-      });
-
-      // Show package route on map
-      $('#packagesTable').on('click', '.route-btn, .package-id', function () {
-        const companyId = $(this).data('company');
-        const packageId = $(this).data('id');
-        $.get(`/buisness/${companyId}/packages/${packageId}`, function(pkg) {
-          if (pkg.path && pkg.path.length > 0) {
-            const markers = pkg.path.map((loc, idx) =>
-              `lonlat:${loc.lon},${loc.lat};type:material;color:%231f63e6;size:medium;text:${idx + 1}`
+      // Show customer details on click (expand as needed)
+      $('#packagesTable').on('click', '.customer-id', function() {
+        const customerId = $(this).data('id');
+        $.get(`/customers`, function(customers) {
+          const customer = customers.find(c => c._id === customerId);
+          if (customer) {
+            alert(
+              `Name: ${customer.name}\nEmail: ${customer.email}\nAddress: ${customer.address.street} ${customer.address.number}, ${customer.address.city}`
             );
-            const markerString = markers.join('|');
-            const mapUrl = `https://maps.geoapify.com/v1/staticmap?style=osm-bright-grey&width=800&height=400&marker=${markerString}&apiKey=47422c246bb741b58587d42992e5e6a1`;
-            window.open(mapUrl, '_blank');
           } else {
-            alert('No route available for this package.');
+            alert('Customer not found');
           }
         });
       });
 
-      // Edit package button
-      $('#packagesTable').on('click', '.edit-btn', function () {
-        $('#editPackageId').val($(this).data('id'));
-        $('#editCompanyId').val($(this).data('company'));
-        $('#editEta').val($(this).data('eta'));
-        $('#editStatus').val($(this).data('status'));
-        $('#editModal').show();
-      });
-
-      // Handle edit form submit
-      $('#editForm').submit(function (e) {
-        e.preventDefault();
-        const companyId = $('#editCompanyId').val();
-        const packageId = $('#editPackageId').val();
-        const eta = $('#editEta').val();
-        const status = $('#editStatus').val();
-        $.ajax({
-          url: `/buisness/${companyId}/packages/${packageId}`,
-          type: 'PUT',
-          contentType: 'application/json',
-          data: JSON.stringify({ eta, status }),
-          success: function () {
-            $('#editModal').hide();
-            showPackages($('#companyId').val());
-          },
-          error: function (xhr) {
-            alert("Error: " + (xhr.responseJSON && xhr.responseJSON.error ? xhr.responseJSON.error : "Unknown error"));
-          }
-        });
-      });
-
-      // Add location button
-      $('#packagesTable').on('click', '.addloc-btn', function () {
-        $('#locPackageId').val($(this).data('id'));
-        $('#locCompanyId').val($(this).data('company'));
-        $('#locLat').val('');
-        $('#locLon').val('');
-        $('#locationModal').show();
-      });
-
-    
-    const LOCATIONIQ_KEY = 'pk.64dcab89f3ae44df9d37ab3cb796be2d'; 
-
-  $('#searchLocationBtn').on('click', function (e) {
-  e.preventDefault();
-  const query = $('#locSearch').val().trim();
-  if (!query) {
-    $('#searchResult').html('<span style="color:red;">Please enter a location to search.</span>');
-    $('#addLocBtn').prop('disabled', true);
-    return;
-  }
-  $('#searchResult').html('Searching...');
-  $.get(`https://us1.locationiq.com/v1/search.php?key=${LOCATIONIQ_KEY}&q=${encodeURIComponent(query)}&format=json`, function (data) {
-    if (Array.isArray(data) && data.length > 0) {
-      const loc = data[0];
-      $('#searchResult').html(
-        `<b>Found:</b> ${loc.display_name}<br>
-         <b>Lat:</b> ${loc.lat}, <b>Lon:</b> ${loc.lon}`
-      );
-      $('#locLat').val(loc.lat);
-      $('#locLon').val(loc.lon);
-      $('#addLocBtn').prop('disabled', false);
-    } else {
-      $('#searchResult').html('<span style="color:red;">No location found. Try again.</span>');
-      $('#addLocBtn').prop('disabled', true);
-    }
-  }).fail(function () {
-    $('#searchResult').html('<span style="color:red;">Error searching location. Try again.</span>');
-    $('#addLocBtn').prop('disabled', true);
-  });
-});
-
-// איפוס תוצאה כאשר פותחים את המודל
-$('#packagesTable').on('click', '.addloc-btn', function () {
-  $('#locPackageId').val($(this).data('id'));
-  $('#locCompanyId').val($(this).data('company'));
-  $('#locSearch').val('');
-  $('#searchResult').html('');
-  $('#locLat').val('');
-  $('#locLon').val('');
-  $('#addLocBtn').prop('disabled', true);
-  $('#locationModal').show();
-});
-
-// שליחת מיקום לשרת
-$('#locationForm').submit(function (e) {
-  e.preventDefault();
-  const companyId = $('#locCompanyId').val();
-  const packageId = $('#locPackageId').val();
-  const lat = $('#locLat').val();
-  const lon = $('#locLon').val();
-  if (!lat || !lon) {
-    $('#searchResult').html('<span style="color:red;">Please search and select a location first.</span>');
-    return;
-  }
-  $.ajax({
-    url: `/buisness/${companyId}/packages/${packageId}/path`,
-    type: 'PUT',
-    contentType: 'application/json',
-    data: JSON.stringify({ lat, lon }),
-    success: function () {
-      $('#locationModal').hide();
-      showPackages($('#companyId').val());
-    },
-    error: function (xhr) {
-      alert("Error: " + (xhr.responseJSON && xhr.responseJSON.error ? xhr.responseJSON.error : "Unknown error"));
-    }
-  });
-});
-
-      // Hide modals on background click
-      $('.modal-bg').on('click', function(e) {
-        if (e.target === this) $(this).hide();
+      // Show package path on click (expand as needed)
+      $('#packagesTable').on('click', '.package-id', function() {
+        const packageId = $(this).data('id');
+        // You can implement a modal/map here
+        alert('Show path for package: ' + packageId);
       });
     });
   </script>

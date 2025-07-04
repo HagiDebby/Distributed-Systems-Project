@@ -111,7 +111,7 @@
       // Go to company packages on name click
       $('#companiesTable').on('click', '.company-name', function() {
         const companyId = $(this).data('id');
-        window.location.href = `/list?companyId=${companyId}`;
+        window.location.href = `/main?companyId=${companyId}`;
       });
 
       // Open add customer modal
