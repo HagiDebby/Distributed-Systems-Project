@@ -1,0 +1,86 @@
+<!doctype html>
+<html>
+<head>
+    <title>Add New Package</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/jquery-validate/1.19.1/jquery.validate.min.js"></script>
+    <script src="../js/package_utils.js"></script>
+</head>
+<body>
+    <div class="col-sm-6 col-sm-offset-3">
+        <h1>Add New Package</h1>
+        <form id="package_form" name="package_form" method="POST">
+            <!-- Package ID -->
+            <div class="form-group">
+                <label for="ID">Package ID <small>(uuid will be used if left blank)</small></label>
+                <input type="text" class="form-control" name="ID" id="ID" placeholder="write ID here" required>
+            </div>
+            <!-- Product ID -->
+            <div class="form-group">
+                <label for="productID">Product ID</label>
+                <input type="text" class="form-control" name="productID" id="productID" placeholder="write product ID here" required>
+            </div>
+            <h3>Customer Details</h3>
+            <!-- Customer ID -->
+            <div class="form-group">
+                <label for="customerID">Customer ID</label>
+                <input type="text" class="form-control" name="customerID" id="customerID" placeholder="write customer ID here" required>
+            </div>
+            <!-- Name -->
+            <div class="form-group">
+                <label for="name">Customer Name</label>
+                <input type="text" class="form-control" name="name" id="name" placeholder="write name here" required>
+            </div>
+            <!-- Email -->
+            <div class="form-group">
+                <label for="email">Customer Email</label>
+                <input type="email" class="form-control" name="email" id="email" placeholder="customer@email.com" required>
+            </div>
+            <h4>Customer Address</h4>
+            <!-- Street -->
+            <div class="form-group">
+                <label for="street">Street</label>
+                <input type="text" class="form-control" name="street" id="street" placeholder="Street" required>
+            </div>
+            <!-- Number -->
+            <div class="form-group">
+                <label for="number">Number</label>
+                <input type="number" class="form-control" name="number" id="number" placeholder="Number" required>
+            </div>
+            <!-- Apartment (optional) -->
+            <div class="form-group">
+                <label for="apartment">Apartment</label>
+                <input type="number" class="form-control" name="apartment" id="apartment" placeholder="Apartment">
+            </div>
+            <!-- City -->
+            <div class="form-group">
+                <label for="city">City</label>
+                <input type="text" class="form-control" name="city" id="city" placeholder="City" required>
+            </div>
+            <!-- Start Date -->
+            <div class="form-group">
+                <label for="start_date">Order Date (timestamp)</label>
+                <input type="number" class="form-control" name="start_date" id="start_date" placeholder="e.g. 1746907533" required>
+                    
+            </div>
+            <!-- ETA -->
+            <div class="form-group">
+                <label for="eta">ETA (timestamp)</label>
+                <input type="number" class="form-control" name="eta" id="eta" placeholder="e.g. 1747771531" required>
+            </div>
+            <!-- Status -->
+            <div class="form-group">
+                <label for="status">Status</label>
+                <select class="form-control" name="status" id="status" required>
+                    <option value="packed">packed</option>
+                    <option value="shipped">shipped</option>
+                    <option value="intransit">intransit</option>
+                    <option value="delivered">delivered</option>
+                </select>
+            </div>
+            <button type="submit" class="btn btn-success">Submit <span class="fa fa-arrow-right"></span></button>
+        </form>
+    </div>
+</body>
+</html>
