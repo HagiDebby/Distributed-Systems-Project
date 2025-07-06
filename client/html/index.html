@@ -31,6 +31,8 @@
     // Helper to format timestamps
     function formatDate(epoch) {
       if (!epoch) return '';
+      // If epoch is in seconds, convert to ms
+      if (epoch < 10000000000) epoch *= 1000;
       const d = new Date(epoch);
       return d.toLocaleString();
     }
@@ -50,19 +52,19 @@
         }
       });
     }
+    
 
     // Load packages for company
     function loadPackages(companyId) {
       $.get(`/business/${companyId}/packages`, function(result) {
         let packages = result;
-        // If your API returns {success, data}, use: let packages = result.data;
         if (!Array.isArray(packages)) packages = packages.data || [];
         // Sort by start_date descending
         packages.sort((a, b) => b.start_date - a.start_date);
         let rows = '';
         packages.forEach(pkg => {
           rows += `<tr>
-            <td class="pointer package-id" data-id="${pkg._id}">${pkg._id}</td>
+            <td class="pointer package-id" data-id="${pkg._id}" data-path='${JSON.stringify(pkg.path || [])}'>${pkg._id}</td>
             <td>${pkg.prod_id}</td>
             <td>${pkg.name}</td>
             <td class="pointer customer-id" data-id="${pkg.customer_id}">${pkg.customer_id}</td>
@@ -86,7 +88,7 @@
       loadCompanyName(companyId);
       loadPackages(companyId);
 
-      // Show customer details on click (expand as needed)
+      // Show customer details on click
       $('#packagesTable').on('click', '.customer-id', function() {
         const customerId = $(this).data('id');
         $.get(`/customers`, function(customers) {
@@ -101,11 +103,20 @@
         });
       });
 
-      // Show package path on click (expand as needed)
+      // Show package path on click (map)
       $('#packagesTable').on('click', '.package-id', function() {
-        const packageId = $(this).data('id');
-        // You can implement a modal/map here
-        alert('Show path for package: ' + packageId);
+        const path = $(this).data('path');
+        if (!path || !Array.isArray(path) || path.length === 0) {
+          alert('No path data for this package.');
+          return;
+        }
+        // Build Geoapify static map URL
+        const apiKey = '34f2ec45ff2945c9896a5401cce5f107'; // Replace with your API key
+        const markers = path.map((p, i) =>
+          `lonlat:${p.lon},${p.lat};type:material;color:%231f63e6;size:x-large;icon:cloud;icontype:awesome;text:${i+1};whitecircle:no`
+        ).join('|');
+        const mapUrl = `https://maps.geoapify.com/v1/staticmap?style=osm-bright-grey&width=600&height=400&marker=${markers}&apiKey=${apiKey}`;
+        window.open(mapUrl, '_blank');
       });
     });
   </script>
