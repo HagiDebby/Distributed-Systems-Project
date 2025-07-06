@@ -5,115 +5,7 @@
   <title>Company Packages</title>
   <link rel="stylesheet" href="/css/style1.css">
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
-  <style>
-    /* Modal styles */
-    .modal-bg {
-      display: none;
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100vh;
-      background: rgba(0,0,0,0.5);
-      z-index: 1000;
-    }
-    .modal-content {
-      background: white;
-      padding: 20px;
-      border-radius: 5px;
-      width: 500px;
-      margin: 50px auto;
-      position: relative;
-      max-height: 90vh;
-      overflow-y: auto;
-    }
-    .close-modal {
-      position: absolute;
-      top: 10px;
-      right: 10px;
-      cursor: pointer;
-      font-size: 20px;
-    }
-    .form-group {
-      margin-bottom: 15px;
-    }
-    .form-group label {
-      display: block;
-      margin-bottom: 5px;
-      font-weight: bold;
-    }
-    .form-group input, .form-group select {
-      width: 100%;
-      padding: 8px;
-      box-sizing: border-box;
-    }
-    .btn {
-      padding: 8px 15px;
-      cursor: pointer;
-      margin-right: 5px;
-    }
-    .btn-primary {
-      background-color: #007bff;
-      color: white;
-      border: none;
-      border-radius: 4px;
-    }
-    .btn-success {
-      background-color: #28a745;
-      color: white;
-      border: none;
-      border-radius: 4px;
-    }
-    .customer-search {
-      display: flex;
-      gap: 10px;
-    }
-    .customer-search input {
-      flex: 1;
-    }
-    #customerResults {
-      margin-top: 10px;
-      border: 1px solid #ddd;
-      max-height: 200px;
-      overflow-y: auto;
-      display: none;
-    }
-    .customer-result {
-      padding: 8px;
-      cursor: pointer;
-      border-bottom: 1px solid #eee;
-    }
-    .customer-result:hover {
-      background-color: #f5f5f5;
-    }
-    .tab-container {
-      margin-bottom: 20px;
-    }
-    .tab-buttons {
-      display: flex;
-      border-bottom: 1px solid #ddd;
-    }
-    .tab-button {
-      padding: 10px 15px;
-      cursor: pointer;
-      background: #f1f1f1;
-      border: none;
-      margin-right: 5px;
-    }
-    .tab-button.active {
-      background: #fff;
-      border: 1px solid #ddd;
-      border-bottom: 1px solid #fff;
-      margin-bottom: -1px;
-    }
-    .tab-content {
-      display: none;
-      padding: 15px 0;
-    }
-    .tab-content.active {
-      display: block;
-    }
-  </style>
+ 
 </head>
 <body>
   <div class="col-sm-10 col-sm-offset-1">
@@ -342,7 +234,7 @@
         $('#packageModal').show();
       });
 
-      // Search customers for advanced selection
+      // Search customers for advanced selection - UPDATED
       $('#searchCustomerBtn').on('click', function() {
         const searchTerm = $('#customerSearch').val().trim();
         if (!searchTerm) {
@@ -351,9 +243,14 @@
         }
         
         $.get('/customers', function(customers) {
+          if (!Array.isArray(customers)) {
+            $('#customerResults').html('<div class="customer-result">Error loading customers</div>').show();
+            return;
+          }
+          
           const results = customers.filter(c => 
-            c.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-            c.email.toLowerCase().includes(searchTerm.toLowerCase())
+            c.name && c.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+            (c.email && c.email.toLowerCase().includes(searchTerm.toLowerCase()))
           );
           
           if (results.length === 0) {
@@ -363,30 +260,56 @@
           
           let html = '';
           results.forEach(customer => {
-            html += `<div class="customer-result" data-id="${customer._id}" data-name="${customer.name}" data-email="${customer.email}">
+            html += `<div class="customer-result" data-id="${customer._id}" data-name="${customer.name}">
               <strong>${customer.name}</strong><br>
-              ${customer.email}
+              ${customer.email || 'No email'}
             </div>`;
           });
           
           $('#customerResults').html(html).show();
+        }).fail(function() {
+          $('#customerResults').html('<div class="customer-result">Error loading customers</div>').show();
         });
       });
 
-      // Select customer from search results
+      // Select customer from search results - UPDATED
       $('#customerResults').on('click', '.customer-result', function() {
         const customerId = $(this).data('id');
         const customerName = $(this).data('name');
         $('#selectedCustomerId').val(customerId);
         $('#customerSearch').val(`${customerName} (selected)`);
         $('#customerResults').hide();
+        
+        // Enable form submission by marking as valid
+        $('#customerId').val(customerId).trigger('input');
       });
 
-      // Handle package form submission - UPDATED VERSION
+      // Handle tab switching - ADDED
+      $('.tab-button').on('click', function() {
+        const tabId = $(this).data('tab');
+        $('.tab-button').removeClass('active');
+        $(this).addClass('active');
+        $('.tab-content').removeClass('active');
+        $(`#${tabId}Tab`).addClass('active');
+        
+        // Clear validation when switching tabs
+        $('#customerId').val('');
+        $('#selectedCustomerId').val('');
+        $('#customerSearch').val('');
+        $('#customerResults').hide();
+      });
+
+      // Handle package form submission - UPDATED
       $('#packageForm').on('submit', function(e) {
         e.preventDefault();
         const companyId = $('#companyId').val();
-        const customerId = $('#advancedTab').hasClass('active') ? $('#selectedCustomerId').val() : $('#customerId').val();
+        let customerId;
+        
+        if ($('#basicTab').hasClass('active')) {
+          customerId = $('#customerId').val();
+        } else {
+          customerId = $('#selectedCustomerId').val();
+        }
         
         if (!customerId) {
           alert('Please select a customer');
@@ -407,8 +330,8 @@
           prod_id: $('#prodId').val(),
           name: $('#packageName').val(),
           customer_id: customerId,
-          business_id: companyId,  // Add business_id
-          start_date: startDate,   // Add current timestamp
+          business_id: companyId,
+          start_date: startDate,
           eta: eta,
           status: $('#status').val()
         };
@@ -427,18 +350,6 @@
             alert("Error: " + (xhr.responseJSON && xhr.responseJSON.message ? xhr.responseJSON.message : "Unknown error"));
           }
         });
-      });
-
-      // Add location to package path - show modal
-      $('#packagesTable').on('click', '.add-loc-to-path', function() {
-        const packageId = $(this).data('id');
-        $('#packageId').val(packageId);
-        $('#locationSearch').val('');
-        $('#searchResult').html('');
-        $('#locLat').val('');
-        $('#locLon').val('');
-        $('#addLocBtn').prop('disabled', true);
-        $('#locationModal').show();
       });
 
       // Search location using LocationIQ
