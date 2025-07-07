@@ -5,7 +5,7 @@
   <title>Company Packages</title>
   <link rel="stylesheet" href="/css/style1.css">
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
- <style>
+  <style>
     /* Modal styles */
     .modal-bg {
       display: none;
@@ -342,7 +342,7 @@
         $('#packageModal').show();
       });
 
-      // Search customers for advanced selection - UPDATED
+      // Search customers for advanced selection
       $('#searchCustomerBtn').on('click', function() {
         const searchTerm = $('#customerSearch').val().trim();
         if (!searchTerm) {
@@ -351,14 +351,9 @@
         }
         
         $.get('/customers', function(customers) {
-          if (!Array.isArray(customers)) {
-            $('#customerResults').html('<div class="customer-result">Error loading customers</div>').show();
-            return;
-          }
-          
           const results = customers.filter(c => 
-            c.name && c.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-            (c.email && c.email.toLowerCase().includes(searchTerm.toLowerCase()))
+            c.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+            c.email.toLowerCase().includes(searchTerm.toLowerCase())
           );
           
           if (results.length === 0) {
@@ -368,56 +363,30 @@
           
           let html = '';
           results.forEach(customer => {
-            html += `<div class="customer-result" data-id="${customer._id}" data-name="${customer.name}">
+            html += `<div class="customer-result" data-id="${customer._id}" data-name="${customer.name}" data-email="${customer.email}">
               <strong>${customer.name}</strong><br>
-              ${customer.email || 'No email'}
+              ${customer.email}
             </div>`;
           });
           
           $('#customerResults').html(html).show();
-        }).fail(function() {
-          $('#customerResults').html('<div class="customer-result">Error loading customers</div>').show();
         });
       });
 
-      // Select customer from search results - UPDATED
+      // Select customer from search results
       $('#customerResults').on('click', '.customer-result', function() {
         const customerId = $(this).data('id');
         const customerName = $(this).data('name');
         $('#selectedCustomerId').val(customerId);
         $('#customerSearch').val(`${customerName} (selected)`);
         $('#customerResults').hide();
-        
-        // Enable form submission by marking as valid
-        $('#customerId').val(customerId).trigger('input');
       });
 
-      // Handle tab switching - ADDED
-      $('.tab-button').on('click', function() {
-        const tabId = $(this).data('tab');
-        $('.tab-button').removeClass('active');
-        $(this).addClass('active');
-        $('.tab-content').removeClass('active');
-        $(`#${tabId}Tab`).addClass('active');
-        
-        // Clear validation when switching tabs
-        $('#customerId').val('');
-        $('#selectedCustomerId').val('');
-        $('#customerSearch').val('');
-        $('#customerResults').hide();
-      });
-
-      // Handle package form submission - UPDATED
+      // Handle package form submission - UPDATED VERSION
       $('#packageForm').on('submit', function(e) {
         e.preventDefault();
         const companyId = $('#companyId').val();
-        let customerId;
-        
-        if ($('#basicTab').hasClass('active')) {
-          customerId = $('#customerId').val();
-        } else {
-          customerId = $('#selectedCustomerId').val();
-        }
+        const customerId = $('#advancedTab').hasClass('active') ? $('#selectedCustomerId').val() : $('#customerId').val();
         
         if (!customerId) {
           alert('Please select a customer');
@@ -438,8 +407,8 @@
           prod_id: $('#prodId').val(),
           name: $('#packageName').val(),
           customer_id: customerId,
-          business_id: companyId,
-          start_date: startDate,
+          business_id: companyId,  // Add business_id
+          start_date: startDate,   // Add current timestamp
           eta: eta,
           status: $('#status').val()
         };
@@ -458,6 +427,18 @@
             alert("Error: " + (xhr.responseJSON && xhr.responseJSON.message ? xhr.responseJSON.message : "Unknown error"));
           }
         });
+      });
+
+      // Add location to package path - show modal
+      $('#packagesTable').on('click', '.add-loc-to-path', function() {
+        const packageId = $(this).data('id');
+        $('#packageId').val(packageId);
+        $('#locationSearch').val('');
+        $('#searchResult').html('');
+        $('#locLat').val('');
+        $('#locLon').val('');
+        $('#addLocBtn').prop('disabled', true);
+        $('#locationModal').show();
       });
 
       // Search location using LocationIQ
