@@ -1,6 +1,6 @@
 /**
  * Map Modal Component
- * Handles displaying package routes on a map
+ * Handles displaying package routes on an interactive map
  */
 
 class MapModal {
@@ -9,6 +9,8 @@ class MapModal {
         this.apiKey = '34f2ec45ff2945c9896a5401cce5f107'; // Geoapify API key
         this.currentPackage = null;
         this.customers = []; // Cache for customers
+        this.map = null; // Leaflet map instance
+        this.markers = []; // Store markers for cleanup
     }
 
     /**
@@ -48,6 +50,33 @@ class MapModal {
                 this.showRoute(this.currentPackage);
             }
         });
+
+        // Route stop click - focus map on location
+        $(document).on('click', '.route-stop-item', (e) => {
+            const lat = parseFloat($(e.currentTarget).data('lat'));
+            const lon = parseFloat($(e.currentTarget).data('lon'));
+            const index = $(e.currentTarget).data('index');
+
+            if (this.map && lat && lon) {
+                // Focus map on the selected location
+                this.map.setView([lat, lon], 16, {
+                    animate: true,
+                    duration: 0.5
+                });
+
+                // Find and open the corresponding marker popup
+                this.markers.forEach(marker => {
+                    const markerLatLng = marker.getLatLng();
+                    if (Math.abs(markerLatLng.lat - lat) < 0.0001 && Math.abs(markerLatLng.lng - lon) < 0.0001) {
+                        setTimeout(() => {
+                            marker.openPopup();
+                        }, 600); // Wait for pan animation to complete
+                    }
+                });
+
+                console.log(`Focusing map on stop ${index + 1}: [${lat}, ${lon}]`);
+            }
+        });
     }
 
     /**
@@ -65,7 +94,7 @@ class MapModal {
         await this.loadCustomers();
 
         // Show modal with loading state
-        $('#mapModalTitle').text(`Route for Package: ${packageData.name}`);
+        $('#mapModalTitle').text(`Route for Package: ${packageData._id}`);
         this.showLoading();
         window.modalManager.showModal(this.modalId);
 
@@ -116,101 +145,114 @@ class MapModal {
         // Display route info
         this.displayRouteInfo(packageData.path);
 
-        // Generate and display map
-        this.generateMap(customer, packageData.path);
+        // Generate and display interactive map
+        this.generateInteractiveMap(customer, packageData.path);
     }
 
     /**
-     * Generate map URL and display it
+     * Generate interactive map and display it
      * @param {Object} customer - Customer object with address
      * @param {Array} path - Array of path coordinates
      */
-    generateMap(customer, path) {
+    generateInteractiveMap(customer, path) {
         try {
-            // Determine center coordinates (longitude first, latitude second)
-            let centerLon, centerLat;
+            // Clear existing map
+            this.clearMap();
+
+            // Default to customer home if available, otherwise Israel center
+            let initialLat = 31.7683; // Israel center fallback
+            let initialLon = 35.2137;
+            let initialZoom = 8;
 
             if (customer.address && customer.address.lat && customer.address.lon) {
-                // Use customer's coordinates as center
-                centerLon = customer.address.lon;
-                centerLat = customer.address.lat;
-            } else if (path && path.length > 0) {
-                // Fallback: use last path location as center (path is in descending order)
-                const lastLocation = path[path.length - 1];
-                centerLon = lastLocation.lon;
-                centerLat = lastLocation.lat;
-            } else {
-                // Default center (Israel) - longitude first, latitude second
-                centerLon = 35.2137;
-                centerLat = 31.7683;
+                initialLat = customer.address.lat;
+                initialLon = customer.address.lon;
+                initialZoom = 14; // Close zoom on customer home
             }
 
-            // Build markers array (no encoding yet)
-            let markers = [];
+            // Initialize map focused on customer home
+            this.map = L.map('interactiveMap').setView([initialLat, initialLon], initialZoom);
 
-            // Add customer home marker (if coordinates available) - NO NUMBER, just house icon
+            // Add Geoapify tile layer
+            L.tileLayer(`https://maps.geoapify.com/v1/tile/osm-bright/{z}/{x}/{y}.png?apiKey=${this.apiKey}`, {
+                attribution: '© <a href="https://www.geoapify.com/">Geoapify</a> | © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+                maxZoom: 18
+            }).addTo(this.map);
+
+            // Add customer home marker
             if (customer.address && customer.address.lat && customer.address.lon) {
-                const homeMarker = `lonlat:${customer.address.lon},${customer.address.lat};type:material;color:#e74c3c;size:x-large;icon:home;icontype:awesome;whitecircle:no`;
-                markers.push(homeMarker);
+                const homeMarker = L.divIcon({
+                    html: '<div class="custom-marker home-marker">🏠</div>',
+                    className: 'custom-div-icon',
+                    iconSize: [30, 30],
+                    iconAnchor: [15, 15]
+                });
+
+                const marker = L.marker([customer.address.lat, customer.address.lon], { icon: homeMarker })
+                    .addTo(this.map)
+                    .bindPopup(`
+            <div style="text-align: center;">
+              <strong>🏠 Customer Home</strong><br>
+              <em>${customer.name}</em><br>
+              ${customer.address.street} ${customer.address.number}<br>
+              ${customer.address.city}
+            </div>
+          `);
+
+                this.markers.push(marker);
             }
 
-            // Add path markers in descending order (path is already in descending order - latest first)
+            // Add route markers
             if (path && path.length > 0) {
                 path.forEach((location, index) => {
-                    const pathMarker = `lonlat:${location.lon},${location.lat};type:material;color:#1f63e6;size:x-large;icon:cloud;icontype:awesome;text:${index + 1};whitecircle:no`;
-                    markers.push(pathMarker);
+                    const routeMarker = L.divIcon({
+                        html: `<div class="custom-marker route-marker">${index + 1}</div>`,
+                        className: 'custom-div-icon',
+                        iconSize: [25, 25],
+                        iconAnchor: [12.5, 12.5]
+                    });
+
+                    const marker = L.marker([location.lat, location.lon], { icon: routeMarker })
+                        .addTo(this.map)
+                        .bindPopup(`
+              <div style="text-align: center;">
+                <strong>📍 Stop ${index + 1}</strong><br>
+                <em>Route Location</em><br>
+                Lat: ${location.lat.toFixed(6)}<br>
+                Lon: ${location.lon.toFixed(6)}
+              </div>
+            `);
+
+                    this.markers.push(marker);
                 });
             }
 
-            // If no markers at all, show error
-            if (markers.length === 0) {
-                this.showError('No location data available for this package');
-                return;
-            }
+            // Hide loading and show map
+            $('#mapLoading').hide();
+            $('#interactiveMap').show();
 
-            // Join markers with pipe separator
-            const markersString = markers.join('|');
+            // Invalidate size to ensure proper rendering
+            setTimeout(() => {
+                this.map.invalidateSize();
+            }, 200);
 
-            // Calculate appropriate zoom level based on number of locations
-            let zoom = 13;
-            if (path && path.length > 3) {
-                zoom = 12; // Zoom out more for multiple locations
-            } else if (!path || path.length === 0) {
-                zoom = 14; // Zoom in more for single location
-            }
-
-            // Build complete URL with proper encoding
-            const baseUrl = 'https://maps.geoapify.com/v1/staticmap';
-            const params = new URLSearchParams({
-                style: 'osm-bright-grey',
-                width: '800',
-                height: '400',
-                center: `lonlat:${centerLon},${centerLat}`,
-                zoom: zoom.toString(),
-                marker: markersString,
-                apiKey: this.apiKey
-            });
-
-            const mapUrl = `${baseUrl}?${params.toString()}`;
-
-            console.log('Generated map URL:', mapUrl);
-            console.log('Markers string before encoding:', markersString);
-
-            // Load the image
-            const img = new Image();
-            img.onload = () => {
-                $('#mapLoading').hide();
-                $('#routeMapImage').attr('src', mapUrl).show();
-            };
-            img.onerror = () => {
-                this.showError('Failed to load map image');
-            };
-            img.src = mapUrl;
+            console.log(`Interactive map initialized at customer home [${initialLat}, ${initialLon}] zoom ${initialZoom}`);
 
         } catch (error) {
-            console.error('Error generating map:', error);
-            this.showError('Error generating map');
+            console.error('Error generating interactive map:', error);
+            this.showError('Error generating interactive map');
         }
+    }
+
+    /**
+     * Clear existing map and markers
+     */
+    clearMap() {
+        if (this.map) {
+            this.map.remove();
+            this.map = null;
+        }
+        this.markers = [];
     }
 
     /**
@@ -246,6 +288,7 @@ class MapModal {
             $('#routeInfo').html(`
         <h4>🚚 Route Information</h4>
         <p><em>No route locations added yet</em></p>
+        <p><em>Click markers on the map for details</em></p>
       `);
             return;
         }
@@ -253,14 +296,18 @@ class MapModal {
         let routeHtml = `
       <h4>🚚 Route Information</h4>
       <p><strong>Total Stops:</strong> ${path.length}</p>
-      <p><em>Showing in chronological order (latest first)</em></p>
+      <p><em>Click stops below or markers on map</em></p>
       <div style="max-height: 120px; overflow-y: auto; border: 1px solid #eee; border-radius: 3px; padding: 5px;">
     `;
 
         path.forEach((location, index) => {
             routeHtml += `
-        <p style="margin: 2px 0; padding: 3px; background: ${index % 2 === 0 ? '#f8f9fa' : 'transparent'};">
-          <strong>Stop ${index + 1}:</strong> ${location.lat.toFixed(6)}, ${location.lon.toFixed(6)}
+        <p class="route-stop-item" data-lat="${location.lat}" data-lon="${location.lon}" data-index="${index}" 
+           style="margin: 2px 0; padding: 6px; background: ${index % 2 === 0 ? '#f8f9fa' : 'transparent'}; 
+                  cursor: pointer; border-radius: 3px; transition: background-color 0.2s;"
+           onmouseover="this.style.backgroundColor='#e3f2fd'" 
+           onmouseout="this.style.backgroundColor='${index % 2 === 0 ? '#f8f9fa' : 'transparent'}'">
+          <strong>📍 Stop ${index + 1}:</strong> ${location.lat.toFixed(6)}, ${location.lon.toFixed(6)}
         </p>
       `;
         });
@@ -274,7 +321,7 @@ class MapModal {
      */
     showLoading() {
         $('#mapLoading').show();
-        $('#routeMapImage').hide();
+        $('#interactiveMap').hide();
         $('#mapError').hide();
     }
 
@@ -284,7 +331,7 @@ class MapModal {
      */
     showError(message) {
         $('#mapLoading').hide();
-        $('#routeMapImage').hide();
+        $('#interactiveMap').hide();
         $('#mapError').find('p').text(message);
         $('#mapError').show();
     }
@@ -293,6 +340,7 @@ class MapModal {
      * Hide the map modal
      */
     hide() {
+        this.clearMap();
         window.modalManager.hideModal(this.modalId);
         this.currentPackage = null;
     }
