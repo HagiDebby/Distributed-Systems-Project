@@ -18,10 +18,33 @@ body {
     max-width: 1000px;
 }
 
-/* Headings */
+/* Headings - centered main headers */
 h1, h3, h4 {
     color: #1f63e6;
     margin-bottom: 20px;
+}
+
+h1 {
+    text-align: center;
+}
+
+/* Header section with back button */
+.header-section {
+    display: flex;
+    align-items: center;
+    margin-bottom: 20px;
+    position: relative;
+}
+
+.back-btn {
+    position: absolute;
+    left: 0;
+}
+
+.header-section h1 {
+    flex: 1;
+    margin: 0;
+    text-align: center;
 }
 
 /* Table styling */
@@ -101,6 +124,18 @@ button.btn:hover, .btn:hover {
 .btn-success:hover {
     background: #2e7031;
 }
+.btn-secondary {
+    background: #6c757d;
+}
+.btn-secondary:hover {
+    background: #545b62;
+}
+.btn-primary {
+    background: #007bff;
+}
+.btn-primary:hover {
+    background: #0056b3;
+}
 
 /* Pointer links */
 .pointer {
@@ -117,25 +152,30 @@ button.btn:hover, .btn:hover {
 .modal-bg {
     display: none;
     position: fixed;
-    top: 0; left: 0;
-    width: 100vw; height: 100vh;
-    background: rgba(0,0,0,0.4);
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0,0,0,0.5);
     z-index: 1000;
 }
+
 .modal-content {
     background: #fff;
-    padding: 24px 30px 18px 30px;
-    border-radius: 10px;
-    max-width: 400px;
-    margin: 100px auto;
+    padding: 20px;
+    border-radius: 5px;
+    width: 500px;
+    margin: 50px auto;
     position: relative;
+    max-height: 90vh;
+    overflow-y: auto;
     box-shadow: 0 2px 16px rgba(0,0,0,0.12);
-    font-size: 1.05em;
 }
+
 .close-modal {
     position: absolute;
-    top: 8px;
-    right: 12px;
+    top: 10px;
+    right: 10px;
     cursor: pointer;
     font-size: 20px;
     color: #888;
@@ -145,11 +185,39 @@ button.btn:hover, .btn:hover {
     color: #e53935;
 }
 
-/* Form in modal */
+/* Form styling */
+.form-group {
+    margin-bottom: 15px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+
+.form-group input, .form-group select {
+    width: 100%;
+    padding: 8px;
+    box-sizing: border-box;
+    border: 1px solid #cfd8dc;
+    border-radius: 5px;
+    font-size: 1em;
+    background: #f9f9f9;
+}
+
+.form-group input:focus, .form-group select:focus {
+    border-color: #1f63e6;
+    outline: none;
+    background: #fff;
+}
+
+/* Modal form styling */
 .modal-content label {
     font-weight: 500;
     margin-top: 8px;
 }
+
 .modal-content input, .modal-content select {
     width: 100%;
     margin-bottom: 12px;
@@ -159,34 +227,71 @@ button.btn:hover, .btn:hover {
     font-size: 1em;
     background: #f9f9f9;
 }
+
 .modal-content input:focus, .modal-content select:focus {
     border-color: #1f63e6;
     outline: none;
     background: #fff;
 }
 
-/* Responsive */
-@media (max-width: 900px) {
-    .col-sm-10.col-sm-offset-1 {
-        padding: 15px 2vw;
-        max-width: 98vw;
-    }
-    .table th, .table td {
-        font-size: 0.97em;
-        padding: 8px 5px;
-    }
+/* Customer search styling */
+.customer-search {
+    display: flex;
+    gap: 10px;
 }
-@media (max-width: 600px) {
-    .col-sm-10.col-sm-offset-1 {
-        padding: 10px 1vw;
-        max-width: 100vw;
-    }
-    .modal-content {
-        padding: 12px 5vw 10px 5vw;
-        margin: 40px auto;
-    }
-    h1 {
-        font-size: 1.3em;
-    }
-  
+
+.customer-search input {
+    flex: 1;
+}
+
+#customerResults {
+    margin-top: 10px;
+    border: 1px solid #ddd;
+    max-height: 200px;
+    overflow-y: auto;
+    display: none;
+}
+
+.customer-result {
+    padding: 8px;
+    cursor: pointer;
+    border-bottom: 1px solid #eee;
+}
+
+.customer-result:hover {
+    background-color: #f5f5f5;
+}
+
+/* Tab styling */
+.tab-container {
+    margin-bottom: 20px;
+}
+
+.tab-buttons {
+    display: flex;
+    border-bottom: 1px solid #ddd;
+}
+
+.tab-button {
+    padding: 10px 15px;
+    cursor: pointer;
+    background: #f1f1f1;
+    border: none;
+    margin-right: 5px;
+}
+
+.tab-button.active {
+    background: #fff;
+    border: 1px solid #ddd;
+    border-bottom: 1px solid #fff;
+    margin-bottom: -1px;
+}
+
+.tab-content {
+    display: none;
+    padding: 15px 0;
+}
+
+.tab-content.active {
+    display: block;
 }

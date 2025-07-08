@@ -3,154 +3,66 @@
 <head>
   <meta charset="utf-8">
   <title>Companies List</title>
-  <link rel="stylesheet" href="../css/style1.css">
+  <link rel="stylesheet" href="../css/global.css">
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
 </head>
 <body>
-  <div class="col-sm-10 col-sm-offset-1">
-    <h1>Companies List</h1>
-    <button class="btn btn-success" id="addCompanyTop">Add Company</button>
-    <button class="btn btn-info" id="addCustomerTop">Add Customer</button>
+<div class="col-sm-10 col-sm-offset-1">
+  <h1>Companies List</h1>
+  <button class="btn btn-success" id="addCompanyTop">Add Company</button>
+  <button class="btn btn-info" id="addCustomerTop">Add Customer</button>
 
-    <table class="table" id="companiesTable">
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th>Site URL</th>
-        </tr>
-      </thead>
-      <tbody>
-        <!-- Companies will be loaded here -->
-      </tbody>
-    </table>
-    <button class="btn btn-success" id="addCompanyBottom">Add Company</button>
-    <button class="btn btn-info" id="addCustomerBottom">Add Customer</button>
+  <table class="table" id="companiesTable">
+    <thead>
+    <tr>
+      <th>Name</th>
+      <th>Site URL</th>
+    </tr>
+    </thead>
+    <tbody>
+    <!-- Companies will be loaded here -->
+    </tbody>
+  </table>
+  <button class="btn btn-success" id="addCompanyBottom">Add Company</button>
+  <button class="btn btn-info" id="addCustomerBottom">Add Customer</button>
+</div>
 
+<!-- Modal for adding company -->
+<div class="modal-bg" id="companyModal">
+  <div class="modal-content">
+    <span class="close-modal" onclick="$('#companyModal').hide();">&times;</span>
+    <h3>Add New Company</h3>
+    <form id="companyForm">
+      <label for="companyName">Name:</label>
+      <input type="text" id="companyName" required>
+      <label for="companyUrl">Site URL:</label>
+      <input type="url" id="companyUrl" required>
+      <button type="submit" class="btn btn-success">Add</button>
+    </form>
   </div>
+</div>
 
-  <!-- Modal for adding company -->
-  <div class="modal-bg" id="companyModal">
-    <div class="modal-content">
-      <span class="close-modal" onclick="$('#companyModal').hide();">&times;</span>
-      <h3>Add New Company</h3>
-      <form id="companyForm">
-        <label for="companyName">Name:</label>
-        <input type="text" id="companyName" required>
-        <label for="companyUrl">Site URL:</label>
-        <input type="url" id="companyUrl" required>
-        <button type="submit" class="btn btn-success">Add</button>
-      </form>
-    </div>
+<!-- Modal for adding customer -->
+<div class="modal-bg" id="customerModal">
+  <div class="modal-content">
+    <span class="close-modal" onclick="$('#customerModal').hide();">&times;</span>
+    <h3>Add New Customer</h3>
+    <form id="customerForm">
+      <label for="customerName">Name:</label>
+      <input type="text" id="customerName" required>
+      <label for="customerEmail">Email:</label>
+      <input type="email" id="customerEmail" required>
+      <label for="customerStreet">Street:</label>
+      <input type="text" id="customerStreet" required>
+      <label for="customerNumber">Number:</label>
+      <input type="number" id="customerNumber" required>
+      <label for="customerCity">City:</label>
+      <input type="text" id="customerCity" required>
+      <button type="submit" class="btn btn-success">Add</button>
+    </form>
   </div>
+</div>
 
-  <!-- Modal for adding customer -->
-  <div class="modal-bg" id="customerModal">
-    <div class="modal-content">
-      <span class="close-modal" onclick="$('#customerModal').hide();">&times;</span>
-      <h3>Add New Customer</h3>
-      <form id="customerForm">
-        <label for="customerName">Name:</label>
-        <input type="text" id="customerName" required>
-        <label for="customerEmail">Email:</label>
-        <input type="email" id="customerEmail" required>
-        <label for="customerStreet">Street:</label>
-        <input type="text" id="customerStreet" required>
-        <label for="customerNumber">Number:</label>
-        <input type="number" id="customerNumber" required>
-        <label for="customerCity">City:</label>
-        <input type="text" id="customerCity" required>
-        <button type="submit" class="btn btn-success">Add</button>
-      </form>
-    </div>
-  </div>
-
-
-  <script>
-    // Load companies
-    function loadCompanies() {
-      $.get('/business', function(companies) {
-        let rows = '';
-        companies.forEach(company => {
-          rows += `<tr>
-            <td class="pointer company-name" data-id="${company._id}">${company.name}</td>
-            <td><a href="${company.site_url}" target="_blank">${company.site_url}</a></td>
-          </tr>`;
-        });
-        $('#companiesTable tbody').html(rows);
-      });
-    }
-
-    $(document).ready(function() {
-      loadCompanies();
-
-      // Open add company modal
-      $('#addCompanyTop, #addCompanyBottom').on('click', function() {
-        $('#companyModal').show();
-      });
-
-      // Add company
-      $('#companyForm').submit(function(e) {
-        e.preventDefault();
-        const name = $('#companyName').val();
-        const site_url = $('#companyUrl').val();
-        $.ajax({
-          url: '/business',
-          type: 'POST',
-          contentType: 'application/json',
-          data: JSON.stringify({ name, site_url }),
-          success: function() {
-            $('#companyModal').hide();
-            loadCompanies();
-          },
-          error: function(xhr) {
-            alert("Error: " + (xhr.responseJSON && xhr.responseJSON.message ? xhr.responseJSON.message : "Unknown error"));
-          }
-        });
-      });
-
-      // Go to company packages on name click
-      $('#companiesTable').on('click', '.company-name', function() {
-        const companyId = $(this).data('id');
-        window.location.href = `/business_page?companyId=${companyId}`;
-      });
-
-      // Open add customer modal
-      $('#addCustomerTop, #addCustomerBottom').on('click', function() {
-        $('#customerModal').show();
-      });
-
-      // Add customer
-      $('#customerForm').submit(function(e) {
-        e.preventDefault();
-        const name = $('#customerName').val();
-        const email = $('#customerEmail').val();
-        const street = $('#customerStreet').val();
-        const number = $('#customerNumber').val();
-        const city = $('#customerCity').val();
-        $.ajax({
-          url: '/customers',
-          type: 'POST',
-          contentType: 'application/json',
-          data: JSON.stringify({
-            name,
-            email,
-            address: { street, number, city }
-          }),
-          success: function() {
-            $('#customerModal').hide();
-            alert('Customer added!');
-          },
-          error: function(xhr) {
-            alert("Error: " + (xhr.responseJSON && xhr.responseJSON.message ? xhr.responseJSON.message : "Unknown error"));
-          }
-        });
-      });
-
-      // Hide modals on background click
-      $('.modal-bg').on('click', function(e) {
-        if (e.target === this) $(this).hide();
-      });
-    });
-  </script>
+<script src="../js/companies.js"></script>
 </body>
 </html>

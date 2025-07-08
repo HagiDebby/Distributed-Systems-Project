@@ -20,7 +20,6 @@ app.use(express.static(path.join(__dirname, '../client')));
 
 app.use('/business_page', express.static(path.join(__dirname, '../client/html/index.html')));
 app.use('/list', express.static(path.join(__dirname, '../client/html/list.html')));
-app.use('/add_package', express.static(path.join(__dirname, '../client/html/add_package_form.html')));
 
 
 // Error handling middleware
