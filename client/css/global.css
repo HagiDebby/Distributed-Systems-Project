@@ -254,6 +254,12 @@ h1 {
     text-align: center;
 }
 
+.contributors{
+    text-align: center;
+    color: #1f63e6;
+    margin-bottom: 25px;
+}
+
 /* Header section with back button */
 .header-section {
     display: flex;

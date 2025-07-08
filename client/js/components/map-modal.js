@@ -94,7 +94,7 @@ class MapModal {
         await this.loadCustomers();
 
         // Show modal with loading state
-        $('#mapModalTitle').text(`Route for Package: ${packageData._id}`);
+        $('#mapModalTitle').text(`Route for Package: ${packageData.name}`);
         this.showLoading();
         window.modalManager.showModal(this.modalId);
 

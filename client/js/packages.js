@@ -68,12 +68,31 @@ function loadPackages(companyId) {
         packages.sort((a, b) => b.start_date - a.start_date);
         let rows = '';
         packages.forEach((pkg, index) => {
+            // Handle customer_id conversion more robustly
+            let customerIdString;
+            if (pkg.customer_id && typeof pkg.customer_id === 'object') {
+                // Handle MongoDB ObjectId object
+                if (pkg.customer_id.$oid) {
+                    customerIdString = pkg.customer_id.$oid;
+                } else if (pkg.customer_id._id) {
+                    customerIdString = pkg.customer_id._id;
+                } else if (pkg.customer_id.toString && typeof pkg.customer_id.toString === 'function') {
+                    customerIdString = pkg.customer_id.toString();
+                } else {
+                    customerIdString = JSON.stringify(pkg.customer_id);
+                }
+            } else {
+                customerIdString = String(pkg.customer_id);
+            }
+
+            console.log(`Package ${index}: customer_id object:`, pkg.customer_id, 'converted to string:', customerIdString);
+
             // Store the package index for easy lookup
             rows += `<tr data-package-index="${index}">
         <td class="pointer package-route" data-package-index="${index}">${pkg._id}</td>
         <td>${pkg.prod_id}</td>
         <td>${pkg.name}</td>
-        <td class="pointer customer-id" data-id="${pkg.customer_id}">${pkg.customer_id}</td>
+        <td class="pointer customer-id" data-id="${customerIdString}" data-customer-object='${JSON.stringify(pkg.customer_id)}'>${customerIdString}</td>
         <td>${formatDate(pkg.start_date)}</td>
         <td>${formatDate(pkg.eta)}</td>
         <td>${pkg.status}</td>
@@ -100,12 +119,13 @@ $(document).ready(function() {
     window.modalManager.init();
 
     // Load required modals for this page
-    window.modalManager.loadModals(['add-package-modal', 'location-modal', 'map-modal'])
+    window.modalManager.loadModals(['add-package-modal', 'location-modal', 'map-modal', 'customer-details-modal'])
         .then(() => {
             // Initialize modal components after loading
             window.packageModal.init();
             window.locationModal.init();
             window.mapModal.init();
+            window.customerDetailsModal.init();
 
             // Set up global modal listeners
             window.modalManager.setupGlobalListeners();
@@ -127,17 +147,39 @@ $(document).ready(function() {
 
     // Show customer details on click
     $('#packagesTable').on('click', '.customer-id', function() {
-        const customerId = $(this).data('id');
-        $.get(`/customers`, function(customers) {
-            const customer = customers.find(c => c._id === customerId);
-            if (customer) {
-                alert(
-                    `Name: ${customer.name}\nEmail: ${customer.email}\nAddress: ${customer.address.street} ${customer.address.number}, ${customer.address.city}`
-                );
-            } else {
-                alert('Customer not found');
+        // Try to get the customer ID from the data attribute (string version)
+        const customerIdString = $(this).data('id');
+        // Also get the original object version as fallback
+        const customerObjectData = $(this).data('customer-object');
+
+        console.log('Customer ID clicked (string):', customerIdString);
+        console.log('Customer ID clicked (object):', customerObjectData);
+
+        let customerIdToUse = customerIdString;
+
+        // If the string version is still [object Object], try to use the object data
+        if (customerIdString === '[object Object]' && customerObjectData) {
+            if (typeof customerObjectData === 'object') {
+                customerIdToUse = customerObjectData;
+            } else if (typeof customerObjectData === 'string') {
+                try {
+                    const parsed = JSON.parse(customerObjectData);
+                    customerIdToUse = parsed;
+                } catch (e) {
+                    customerIdToUse = customerObjectData;
+                }
             }
-        });
+        }
+
+        console.log('Final customer ID to use:', customerIdToUse);
+
+        if (!customerIdToUse) {
+            alert('Customer ID not found');
+            return;
+        }
+
+        // Show customer details modal
+        window.customerDetailsModal.showCustomer(customerIdToUse);
     });
 
     // Show add package modal
