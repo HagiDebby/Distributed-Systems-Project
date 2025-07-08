@@ -1,0 +1,25 @@
+<!-- Package Route Map Modal -->
+<div class="modal-bg" id="mapModal">
+  <div class="modal-content map-modal-content">
+    <span class="close-modal">&times;</span>
+    <h3 id="mapModalTitle">Package Route</h3>
+    <div class="map-container">
+      <div id="mapLoading" class="map-loading">
+        <div class="loading-spinner"></div>
+        <p>Loading map...</p>
+      </div>
+      <img id="routeMapImage" class="route-map-image" style="display: none;" alt="Package Route Map">
+      <div id="mapError" class="map-error" style="display: none;">
+        <p>Failed to load map. Please try again.</p>
+        <button class="btn btn-primary" id="retryMapBtn">Retry</button>
+      </div>
+    </div>
+    <div class="map-info">
+      <div id="customerInfo" class="customer-info"></div>
+      <div id="routeInfo" class="route-info"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" id="closeMapBtn">Close</button>
+    </div>
+  </div>
+</div>

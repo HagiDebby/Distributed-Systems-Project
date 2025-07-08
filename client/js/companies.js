@@ -13,31 +13,31 @@ function loadCompanies() {
 }
 
 $(document).ready(function() {
+    // Initialize modal system
+    window.modalManager.init();
+
+    // Load required modals for this page
+    window.modalManager.loadModals(['company-modal', 'customer-modal'])
+        .then(() => {
+            // Initialize modal components after loading
+            window.companyModal.init();
+            window.customerModal.init();
+
+            // Set up global modal listeners
+            window.modalManager.setupGlobalListeners();
+
+            console.log('All modals loaded and initialized');
+        })
+        .catch(error => {
+            console.error('Failed to load modals:', error);
+        });
+
+    // Load initial data
     loadCompanies();
 
     // Open add company modal
     $('#addCompanyTop, #addCompanyBottom').on('click', function() {
-        $('#companyModal').show();
-    });
-
-    // Add company
-    $('#companyForm').submit(function(e) {
-        e.preventDefault();
-        const name = $('#companyName').val();
-        const site_url = $('#companyUrl').val();
-        $.ajax({
-            url: '/business',
-            type: 'POST',
-            contentType: 'application/json',
-            data: JSON.stringify({ name, site_url }),
-            success: function() {
-                $('#companyModal').hide();
-                loadCompanies();
-            },
-            error: function(xhr) {
-                alert("Error: " + (xhr.responseJSON && xhr.responseJSON.message ? xhr.responseJSON.message : "Unknown error"));
-            }
-        });
+        window.companyModal.show();
     });
 
     // Go to company packages on name click
@@ -48,38 +48,16 @@ $(document).ready(function() {
 
     // Open add customer modal
     $('#addCustomerTop, #addCustomerBottom').on('click', function() {
-        $('#customerModal').show();
+        window.customerModal.show();
     });
 
-    // Add customer
-    $('#customerForm').submit(function(e) {
-        e.preventDefault();
-        const name = $('#customerName').val();
-        const email = $('#customerEmail').val();
-        const street = $('#customerStreet').val();
-        const number = $('#customerNumber').val();
-        const city = $('#customerCity').val();
-        $.ajax({
-            url: '/customers',
-            type: 'POST',
-            contentType: 'application/json',
-            data: JSON.stringify({
-                name,
-                email,
-                address: { street, number, city }
-            }),
-            success: function() {
-                $('#customerModal').hide();
-                alert('Customer added!');
-            },
-            error: function(xhr) {
-                alert("Error: " + (xhr.responseJSON && xhr.responseJSON.message ? xhr.responseJSON.message : "Unknown error"));
-            }
-        });
+    // Listen for custom events from modal components
+    $(document).on('companyAdded', function() {
+        loadCompanies();
     });
 
-    // Hide modals on background click
-    $('.modal-bg').on('click', function(e) {
-        if (e.target === this) $(this).hide();
+    $(document).on('customerAdded', function() {
+        // Customer was added successfully
+        console.log('Customer added successfully');
     });
 });

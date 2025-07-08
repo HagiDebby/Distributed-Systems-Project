@@ -38,93 +38,13 @@
   <button class="btn btn-success" id="addPackageBottom">Add New Package</button>
 </div>
 
-<!-- Add Package Modal -->
-<div class="modal-bg" id="packageModal">
-  <div class="modal-content">
-    <span class="close-modal">&times;</span>
-    <h3>Add New Package</h3>
+<!-- Modal Manager and Components -->
+<script src="../js/modal-manager.js"></script>
+<script src="../js/components/package-modal.js"></script>
+<script src="../js/components/location-modal.js"></script>
+<script src="../js/components/map-modal.js"></script>
 
-    <div class="tab-container">
-      <div class="tab-buttons">
-        <button class="tab-button active" data-tab="basic">Basic Customer Selection</button>
-        <button class="tab-button" data-tab="advanced">Advanced Customer Selection</button>
-      </div>
-
-      <form id="packageForm">
-        <input type="hidden" id="companyId">
-
-        <div class="tab-content active" id="basicTab">
-          <div class="form-group">
-            <label for="customerId">Customer ID:</label>
-            <input type="text" id="customerId" required placeholder="Enter customer ObjectId">
-          </div>
-        </div>
-
-        <div class="tab-content" id="advancedTab">
-          <div class="form-group">
-            <label>Search Customer:</label>
-            <div class="customer-search">
-              <input type="text" id="customerSearch" placeholder="Search by name or email">
-              <button type="button" id="searchCustomerBtn" class="btn btn-primary">Search</button>
-            </div>
-            <div id="customerResults"></div>
-            <input type="hidden" id="selectedCustomerId">
-          </div>
-        </div>
-
-        <div class="form-group">
-          <label for="prodId">Product ID:</label>
-          <input type="text" id="prodId" required>
-        </div>
-
-        <div class="form-group">
-          <label for="packageName">Package Name:</label>
-          <input type="text" id="packageName" required>
-        </div>
-
-        <div class="form-group">
-          <label for="eta">ETA (timestamp):</label>
-          <input type="number" id="eta" required>
-        </div>
-
-        <div class="form-group">
-          <label for="status">Status:</label>
-          <select id="status" required>
-            <option value="packed">packed</option>
-            <option value="shipped">shipped</option>
-            <option value="intransit">intransit</option>
-            <option value="delivered">delivered</option>
-          </select>
-        </div>
-
-        <button type="submit" class="btn btn-success">Add Package</button>
-      </form>
-    </div>
-  </div>
-</div>
-
-<!-- Location Search Modal -->
-<div class="modal-bg" id="locationModal">
-  <div class="modal-content">
-    <span class="close-modal">&times;</span>
-    <h3>Add Location</h3>
-    <form id="locationForm">
-      <input type="hidden" id="packageId">
-      <div class="form-group">
-        <label for="locationSearch">Search Location (English):</label>
-        <div style="display:flex;gap:8px;">
-          <input type="text" id="locationSearch" placeholder="e.g. Tel Aviv, Israel" style="flex:1;">
-          <button type="button" id="searchLocationBtn" class="btn btn-primary">Search</button>
-        </div>
-        <div id="searchResult" style="margin:10px 0 0 0;"></div>
-        <input type="hidden" id="locLat">
-        <input type="hidden" id="locLon">
-        <button type="submit" class="btn btn-primary" disabled id="addLocBtn">Add Location</button>
-      </div>
-    </form>
-  </div>
-</div>
-
-<script src="../js/packages.js"></script>
+<!-- Main page script -->
+<script src="/js/packages.js"></script>
 </body>
 </html>

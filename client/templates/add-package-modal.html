@@ -1,0 +1,56 @@
+<!-- Add Package Modal -->
+<div class="modal-bg" id="packageModal">
+  <div class="modal-content">
+    <span class="close-modal">&times;</span>
+    <h3>Add New Package</h3>
+
+    <form id="packageForm">
+      <input type="hidden" id="companyId">
+      <input type="hidden" id="selectedCustomerId">
+
+      <div class="form-group">
+        <label for="customerInput">Customer:</label>
+        <div class="customer-dropdown-container">
+          <input type="text" id="customerInput"
+                 placeholder="Start typing to search customers..."
+                 autocomplete="off" required>
+          <div class="customer-dropdown" id="customerDropdown"></div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="prodId">Product ID:</label>
+        <input type="text" id="prodId" required
+               minlength="3" maxlength="50"
+               placeholder="Enter product ID (3-50 characters)">
+      </div>
+
+      <div class="form-group">
+        <label for="packageName">Package Name:</label>
+        <input type="text" id="packageName" required
+               minlength="2" maxlength="100"
+               placeholder="Enter package name (2-100 characters)">
+      </div>
+
+      <div class="form-group">
+        <label for="eta">ETA (Date & Time):</label>
+        <input type="datetime-local" id="eta" required>
+        <small style="color: #666; font-size: 0.85em;">
+          Select when the package should be delivered
+        </small>
+      </div>
+
+      <div class="form-group">
+        <label for="status">Status:</label>
+        <select id="status" required>
+          <option value="packed">Packed</option>
+          <option value="shipped">Shipped</option>
+          <option value="intransit">In Transit</option>
+          <option value="delivered">Delivered</option>
+        </select>
+      </div>
+
+      <button type="submit" class="btn btn-success">Add Package</button>
+    </form>
+  </div>
+</div>

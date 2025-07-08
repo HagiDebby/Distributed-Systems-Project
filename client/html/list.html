@@ -27,42 +27,12 @@
   <button class="btn btn-info" id="addCustomerBottom">Add Customer</button>
 </div>
 
-<!-- Modal for adding company -->
-<div class="modal-bg" id="companyModal">
-  <div class="modal-content">
-    <span class="close-modal" onclick="$('#companyModal').hide();">&times;</span>
-    <h3>Add New Company</h3>
-    <form id="companyForm">
-      <label for="companyName">Name:</label>
-      <input type="text" id="companyName" required>
-      <label for="companyUrl">Site URL:</label>
-      <input type="url" id="companyUrl" required>
-      <button type="submit" class="btn btn-success">Add</button>
-    </form>
-  </div>
-</div>
+<!-- Modal Manager and Components -->
+<script src="../js/modal-manager.js"></script>
+<script src="../js/components/company-modal.js"></script>
+<script src="../js/components/customer-modal.js"></script>
 
-<!-- Modal for adding customer -->
-<div class="modal-bg" id="customerModal">
-  <div class="modal-content">
-    <span class="close-modal" onclick="$('#customerModal').hide();">&times;</span>
-    <h3>Add New Customer</h3>
-    <form id="customerForm">
-      <label for="customerName">Name:</label>
-      <input type="text" id="customerName" required>
-      <label for="customerEmail">Email:</label>
-      <input type="email" id="customerEmail" required>
-      <label for="customerStreet">Street:</label>
-      <input type="text" id="customerStreet" required>
-      <label for="customerNumber">Number:</label>
-      <input type="number" id="customerNumber" required>
-      <label for="customerCity">City:</label>
-      <input type="text" id="customerCity" required>
-      <button type="submit" class="btn btn-success">Add</button>
-    </form>
-  </div>
-</div>
-
+<!-- Main page script -->
 <script src="../js/companies.js"></script>
 </body>
 </html>

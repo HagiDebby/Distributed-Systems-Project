@@ -1,0 +1,22 @@
+<!-- Location Search Modal -->
+<div class="modal-bg" id="locationModal">
+  <div class="modal-content">
+    <span class="close-modal">&times;</span>
+    <h3>Add Location</h3>
+    <form id="locationForm">
+      <input type="hidden" id="packageId">
+      <div class="form-group">
+        <label for="locationSearch">Search Location (English):</label>
+        <div style="display:flex;gap:8px;">
+          <input type="text" id="locationSearch" placeholder="e.g. Tel Aviv, Israel" style="flex:1;">
+          <button type="button" id="searchLocationBtn" class="btn btn-primary">Search</button>
+        </div>
+        <div id="searchResults" style="margin:10px 0 0 0;"></div>
+        <input type="hidden" id="selectedLat">
+        <input type="hidden" id="selectedLon">
+        <input type="hidden" id="selectedLocationName">
+        <button type="submit" class="btn btn-primary" disabled id="addLocBtn">Add Location</button>
+      </div>
+    </form>
+  </div>
+</div>
