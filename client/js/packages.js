@@ -55,25 +55,31 @@ function loadCompanyName(companyId) {
 }
 
 // Load packages for company
+// Load packages for company
 function loadPackages(companyId) {
     $.get(`/business/${companyId}/packages`, function(result) {
         let packages = result;
         if (!Array.isArray(packages)) packages = packages.data || [];
+
+        // Store packages globally for later use
+        window.currentPackages = packages;
+
         // Sort by start_date descending
         packages.sort((a, b) => b.start_date - a.start_date);
         let rows = '';
-        packages.forEach(pkg => {
-            rows += `<tr>
-        <td class="pointer package-route" data-id="${pkg._id}" data-path='${JSON.stringify(pkg.path || [])}'>${pkg._id}</td>
+        packages.forEach((pkg, index) => {
+            // Store the package index for easy lookup
+            rows += `<tr data-package-index="${index}">
+        <td class="pointer package-route" data-package-index="${index}">${pkg._id}</td>
         <td>${pkg.prod_id}</td>
         <td>${pkg.name}</td>
-        <td class="pointer customer-id" data-id="${pkg.customer_id}">${pkg.customer_id.toString()}</td>
+        <td class="pointer customer-id" data-id="${pkg.customer_id}">${pkg.customer_id}</td>
         <td>${formatDate(pkg.start_date)}</td>
         <td>${formatDate(pkg.eta)}</td>
         <td>${pkg.status}</td>
         <td>
           <button class="btn btn-primary add-loc-to-path" data-package-id="${pkg._id}">Add to Route</button>
-          <button class="btn btn-info package-route" data-path='${JSON.stringify(pkg.path || [])}'>Show Route</button>
+          <button class="btn btn-info package-route" data-package-index="${index}">Show Route</button>
         </td>
       </tr>`;
         });
@@ -151,39 +157,30 @@ $(document).ready(function() {
         window.locationModal.show(packageId);
     });
 
-    // Show package path on click (map)
+    // Show package path on click (map) - works for both Package ID and Show Route button
     $('#packagesTable').on('click', '.package-route', function() {
-        const path = $(this).data('path');
-        const packageId = $(this).data('id') || $(this).closest('tr').find('.package-route').first().data('id');
+        // Get package data from stored packages array using index
+        const packageIndex = $(this).data('package-index') !== undefined ?
+            $(this).data('package-index') :
+            $(this).closest('tr').data('package-index');
 
-        if (!packageId) {
-            alert('Package ID not found');
+        if (packageIndex === undefined || !window.currentPackages) {
+            alert('Package data not found. Please refresh the page.');
             return;
         }
 
-        if (!path || !Array.isArray(path)) {
+        const packageData = window.currentPackages[packageIndex];
+
+        console.log('Show Route: Package data from server:', packageData);
+        console.log('Show Route: Customer ID from package:', packageData.customer_id);
+        console.log('Show Route: Customer ID type:', typeof packageData.customer_id);
+
+        if (!packageData.path || !Array.isArray(packageData.path)) {
             alert('No path data for this package.');
             return;
         }
 
-        // Get package data from the table row
-        const row = $(this).closest('tr');
-        const customerIdCell = row.find('.customer-id');
-        const customerId = customerIdCell.data('id');
-
-        if (!customerId) {
-            alert('Customer information not found');
-            return;
-        }
-
-        // Create package object for the map modal
-        const packageData = {
-            _id: packageId,
-            customer_id: customerId,
-            path: path
-        };
-
-        // Show the map modal
+        // Show the map modal with the complete package data
         window.mapModal.showRoute(packageData);
     });
 

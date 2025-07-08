@@ -57,18 +57,55 @@ class MapModal {
     async showRoute(packageData) {
         this.currentPackage = packageData;
 
+        console.log('Map Modal: Package data received:', packageData);
+        console.log('Map Modal: Looking for customer ID:', packageData.customer_id);
+        console.log('Map Modal: Customer ID type:', typeof packageData.customer_id);
+
         // Ensure we have fresh customer data
         await this.loadCustomers();
 
         // Show modal with loading state
-        $('#mapModalTitle').text(`Route for Package: ${packageData._id}`);
+        $('#mapModalTitle').text(`Route for Package: ${packageData.name}`);
         this.showLoading();
         window.modalManager.showModal(this.modalId);
 
-        // Find customer for this package
-        const customer = this.customers.find(c => c._id === packageData.customer_id);
+        // Debug: Log all customer IDs and their types
+        console.log('Map Modal: Available customers:', this.customers);
+        console.log('Map Modal: Available customer IDs:', this.customers.map(c => ({id: c._id, type: typeof c._id})));
+
+        // Convert package customer_id to string for comparison
+        // Handle MongoDB ObjectId properly
+        let customerIdToFind;
+        if (packageData.customer_id && typeof packageData.customer_id === 'object' && packageData.customer_id.$oid) {
+            // MongoDB ObjectId with $oid property
+            customerIdToFind = packageData.customer_id.$oid;
+        } else if (packageData.customer_id && typeof packageData.customer_id === 'object' && packageData.customer_id.toHexString) {
+            // MongoDB ObjectId with toHexString method
+            customerIdToFind = packageData.customer_id.toHexString();
+        } else if (packageData.customer_id && typeof packageData.customer_id === 'object') {
+            // Try to get the _id or id property
+            customerIdToFind = packageData.customer_id._id || packageData.customer_id.id || String(packageData.customer_id);
+        } else {
+            // Regular string or number
+            customerIdToFind = String(packageData.customer_id);
+        }
+
+        console.log('Map Modal: Customer ID to find (converted):', customerIdToFind);
+        console.log('Map Modal: Conversion method used for:', typeof packageData.customer_id);
+
+        // Find customer for this package - compare strings
+        const customer = this.customers.find(c => {
+            const customerIdString = c._id.toString ? c._id.toString() : String(c._id);
+            console.log(`Comparing: "${customerIdString}" === "${customerIdToFind}" = ${customerIdString === customerIdToFind}`);
+            return customerIdString === customerIdToFind;
+        });
+
+        console.log('Map Modal: Found customer:', customer);
 
         if (!customer) {
+            console.error('Map Modal: Customer not found after string comparison');
+            console.error('Map Modal: Package customer_id:', customerIdToFind);
+            console.error('Map Modal: Available customer ID strings:', this.customers.map(c => c._id.toString()));
             this.showError('Customer information not found');
             return;
         }
@@ -90,50 +127,49 @@ class MapModal {
      */
     generateMap(customer, path) {
         try {
-            // Determine center coordinates
-            let centerLat, centerLon;
+            // Determine center coordinates (longitude first, latitude second)
+            let centerLon, centerLat;
 
             if (customer.address && customer.address.lat && customer.address.lon) {
                 // Use customer's coordinates as center
-                centerLat = customer.address.lat;
                 centerLon = customer.address.lon;
+                centerLat = customer.address.lat;
             } else if (path && path.length > 0) {
                 // Fallback: use last path location as center (path is in descending order)
                 const lastLocation = path[path.length - 1];
-                centerLat = lastLocation.lat;
                 centerLon = lastLocation.lon;
+                centerLat = lastLocation.lat;
             } else {
-                // Default center (Israel)
-                centerLat = 31.7683;
+                // Default center (Israel) - longitude first, latitude second
                 centerLon = 35.2137;
+                centerLat = 31.7683;
             }
 
-            // Build markers string
-            let markers = '';
+            // Build markers array (no encoding yet)
+            let markers = [];
 
             // Add customer home marker (if coordinates available) - NO NUMBER, just house icon
             if (customer.address && customer.address.lat && customer.address.lon) {
-                markers += `lonlat:${customer.address.lon},${customer.address.lat};type:material;color:%23e74c3c;size:x-large;icon:home;icontype:awesome;whitecircle:no`;
-
-                // Add separator if there are path markers
-                if (path && path.length > 0) {
-                    markers += '|';
-                }
+                const homeMarker = `lonlat:${customer.address.lon},${customer.address.lat};type:material;color:#e74c3c;size:x-large;icon:home;icontype:awesome;whitecircle:no`;
+                markers.push(homeMarker);
             }
 
             // Add path markers in descending order (path is already in descending order - latest first)
             if (path && path.length > 0) {
-                const pathMarkers = path.map((location, index) =>
-                    `lonlat:${location.lon},${location.lat};type:material;color:%231f63e6;size:x-large;icon:cloud;icontype:awesome;text:${index + 1};whitecircle:no`
-                );
-                markers += pathMarkers.join('|');
+                path.forEach((location, index) => {
+                    const pathMarker = `lonlat:${location.lon},${location.lat};type:material;color:#1f63e6;size:x-large;icon:cloud;icontype:awesome;text:${index + 1};whitecircle:no`;
+                    markers.push(pathMarker);
+                });
             }
 
             // If no markers at all, show error
-            if (!markers) {
+            if (markers.length === 0) {
                 this.showError('No location data available for this package');
                 return;
             }
+
+            // Join markers with pipe separator
+            const markersString = markers.join('|');
 
             // Calculate appropriate zoom level based on number of locations
             let zoom = 13;
@@ -143,10 +179,22 @@ class MapModal {
                 zoom = 14; // Zoom in more for single location
             }
 
-            // Build complete URL
-            const mapUrl = `https://maps.geoapify.com/v1/staticmap?style=osm-bright-grey&width=800&height=400&center=lonlat:${centerLon},${centerLat}&zoom=${zoom}&marker=${encodeURIComponent(markers)}&apiKey=${this.apiKey}`;
+            // Build complete URL with proper encoding
+            const baseUrl = 'https://maps.geoapify.com/v1/staticmap';
+            const params = new URLSearchParams({
+                style: 'osm-bright-grey',
+                width: '800',
+                height: '400',
+                center: `lonlat:${centerLon},${centerLat}`,
+                zoom: zoom.toString(),
+                marker: markersString,
+                apiKey: this.apiKey
+            });
+
+            const mapUrl = `${baseUrl}?${params.toString()}`;
 
             console.log('Generated map URL:', mapUrl);
+            console.log('Markers string before encoding:', markersString);
 
             // Load the image
             const img = new Image();
